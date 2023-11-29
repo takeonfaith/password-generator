@@ -1,6 +1,12 @@
-import { IconMoon, IconReload, IconSun } from "@tabler/icons-react";
+import {
+  IconCircleCheckFilled,
+  IconMoon,
+  IconReload,
+  IconSun,
+} from "@tabler/icons-react";
 import { useRef, useState } from "react";
 import {
+  COPY_MESSAGE_TIMEOUT,
   DEFAULT_PASSWORD_PROPS,
   NEW_PASSWORD_ANIMATION_DURATION,
   PasswordProperties,
@@ -8,16 +14,19 @@ import {
 } from "../../constants";
 import { generatePassword } from "../../lib/generatePassword";
 import { Button } from "../button/Button";
+import { Flex } from "../flex/Flex";
 import { Menu } from "../menu/Menu";
+import { RangeStyled } from "../range/Range";
+import { Subtitle } from "../subtitle/Subtitle";
+import { Toggle } from "../toggle/Toggle";
 import {
+  CopiedInfoPlate,
   GeneratorBlockStyled,
   NewPasswordAnimationLayer,
   NewPasswordWrapper,
   PasswordStyled,
   ToggleIcon,
 } from "./styles";
-import { Toggle } from "../toggle/Toggle";
-import { Flex } from "../flex/Flex";
 
 type Props = {
   theme: Themes;
@@ -39,12 +48,18 @@ const getColor = (len: number) => {
 };
 
 export const GeneratorBlock = ({ theme, toggleTheme }: Props) => {
-  const [passwordProps, setPasswordProps] = useState<
-    typeof DEFAULT_PASSWORD_PROPS
-  >(DEFAULT_PASSWORD_PROPS);
+  const [passwordProps, setPasswordProps] = useState<PasswordProperties>(
+    DEFAULT_PASSWORD_PROPS
+  );
   const strengthColor = getColor(passwordProps.length);
   const [slider, setSlider] = useState(passwordProps.length);
   const timeout = useRef(0);
+  const [togglesLeft, setTogglesLeft] = useState(
+    Object.keys(passwordProps).filter((el) => el !== true).length - 1
+  );
+
+  const [showCopyMessage, setShowCopyMessage] = useState(false);
+
   const [password, setPassword] = useState(
     generatePassword(
       slider,
@@ -87,18 +102,39 @@ export const GeneratorBlock = ({ theme, toggleTheme }: Props) => {
     }, 200);
   };
 
+  const copyPassword = () => {
+    navigator.clipboard.writeText(password);
+    setShowCopyMessage(true);
+    setTimeout(() => {
+      setShowCopyMessage(false);
+    }, COPY_MESSAGE_TIMEOUT);
+  };
+
+  console.log(showCopyMessage);
+
   const handleToggleChange = (togglePlace: string) => {
     return () => {
-      setPasswordProps((prev) => {
-        const result = {
-          ...prev,
-          [togglePlace]: !prev[togglePlace as keyof typeof prev] as boolean,
-        };
+      if (
+        !passwordProps[togglePlace as keyof PasswordProperties] ||
+        togglesLeft >= 1
+      )
+        setPasswordProps((prev) => {
+          const value = !prev[
+            togglePlace as keyof PasswordProperties
+          ] as boolean;
 
-        regenerate(result)();
+          if (!value) setTogglesLeft((prev) => prev - 1);
+          else setTogglesLeft((prev) => prev + 1);
 
-        return result;
-      });
+          const result = {
+            ...prev,
+            [togglePlace]: value,
+          };
+
+          regenerate(result)();
+
+          return result;
+        });
     };
   };
 
@@ -110,7 +146,8 @@ export const GeneratorBlock = ({ theme, toggleTheme }: Props) => {
         icon={theme === Themes.dark ? <IconMoon /> : <IconSun />}
       ></Button>
       <Menu>
-        <input
+        <Subtitle>Длина пароля</Subtitle>
+        <RangeStyled
           value={slider}
           type="range"
           onChange={handleLengthChange}
@@ -163,6 +200,10 @@ export const GeneratorBlock = ({ theme, toggleTheme }: Props) => {
         passwordLength={passwordProps.length}
         strengthColor={strengthColor}
       >
+        <CopiedInfoPlate className={showCopyMessage ? "showing" : ""}>
+          <IconCircleCheckFilled />
+          Скопировано!
+        </CopiedInfoPlate>
         <NewPasswordAnimationLayer
           passwordLength={passwordProps.length}
           $strengthColor={strengthColor}
@@ -176,6 +217,7 @@ export const GeneratorBlock = ({ theme, toggleTheme }: Props) => {
           passwordLength={passwordProps.length}
           $strengthColor={strengthColor}
           className={newPassword !== null ? "animating" : ""}
+          onClick={copyPassword}
         >
           {password}
         </PasswordStyled>

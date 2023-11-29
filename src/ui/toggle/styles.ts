@@ -18,7 +18,7 @@ export const ToggleChanged = styled.div`
     border-radius: 20px;
     background: #fff;
     box-shadow: 0 0 10px #00000038;
-    transition: 0.2s;
+    transition: 0.3s;
   }
 `;
 
@@ -28,7 +28,7 @@ export const ToggleStyled = styled.label`
   border-radius: 10px;
 
   &:hover {
-    background: #f2f2f2;
+    background: ${({ theme }) => theme.transparent};
   }
 
   .original-input {
@@ -36,7 +36,7 @@ export const ToggleStyled = styled.label`
   }
 
   .original-input:checked + ${ToggleChanged} {
-    background: ${({ theme }) => theme.blue};
+    background: ${({ theme }) => theme.blue.main};
   }
 
   .original-input:checked + ${ToggleChanged} .circle {
