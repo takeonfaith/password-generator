@@ -55,7 +55,9 @@ export const GeneratorBlock = ({ theme, toggleTheme }: Props) => {
   const [slider, setSlider] = useState(passwordProps.length);
   const timeout = useRef(0);
   const [togglesLeft, setTogglesLeft] = useState(
-    Object.keys(passwordProps).filter((el) => el !== true).length - 1
+    Object.keys(passwordProps).filter(
+      (el) => typeof el === "boolean" && el !== true
+    ).length - 1
   );
 
   const [showCopyMessage, setShowCopyMessage] = useState(false);
